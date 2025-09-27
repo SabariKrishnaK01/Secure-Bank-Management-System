@@ -1,0 +1,754 @@
+import java.util.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
+// Customer Class
+class Customer {
+    private final int id;
+    private final String name;
+    private final int age;
+    private final String gender;
+    private final String phone;
+    private final String email;
+    private final String address;
+    private final String idProof;
+    private final String joinDate;
+
+    public Customer(int id, String name, int age, String gender, String phone, 
+                   String email, String address, String idProof) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.phone = phone;
+        this.email = email;
+        this.address = address;
+        this.idProof = idProof;
+        this.joinDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+    }
+
+    // Getters
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public int getAge() { return age; }
+    public String getGender() { return gender; }
+    public String getPhone() { return phone; }
+    public String getEmail() { return email; }
+    public String getAddress() { return address; }
+    public String getIdProof() { return idProof; }
+    public String getJoinDate() { return joinDate; }
+
+    @Override
+    public String toString() {
+        return String.format("Customer ID: %d\nName: %s\nAge: %d\nGender: %s\nPhone: %s\nEmail: %s\nAddress: %s\nID Proof: %s\nJoin Date: %s",
+                id, name, age, gender, phone, email, address, idProof, joinDate);
+    }
+}
+
+// Account Class
+class Account {
+    private final int id;
+    private final int customerId;
+    private final String type;
+    private double balance;
+    private final double interestRate;
+    private final String openingDate;
+    private String status;
+    private Integer fdTenure; // in months, null for non-FD accounts
+    private String fdMaturity; // null for non-FD accounts
+
+    public Account(int id, int customerId, String type, double initialDeposit, 
+                  double interestRate, Integer fdTenure) {
+        this.id = id;
+        this.customerId = customerId;
+        this.type = type;
+        this.balance = initialDeposit;
+        this.interestRate = interestRate;
+        this.openingDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+        this.status = "Active";
+        
+        if (type.equals("Fixed Deposit")) {
+            this.fdTenure = fdTenure;
+            this.fdMaturity = LocalDate.now().plusMonths(fdTenure)
+                                    .format(DateTimeFormatter.ISO_DATE);
+        } else {
+            this.fdTenure = null;
+            this.fdMaturity = null;
+        }
+    }
+
+    // Getters
+    public int getId() { return id; }
+    public int getCustomerId() { return customerId; }
+    public String getType() { return type; }
+    public double getBalance() { return balance; }
+    public double getInterestRate() { return interestRate; }
+    public String getOpeningDate() { return openingDate; }
+    public String getStatus() { return status; }
+    public Integer getFdTenure() { return fdTenure; }
+    public String getFdMaturity() { return fdMaturity; }
+
+    // Account operations
+    public void deposit(double amount) {
+        if (amount > 0) {
+            balance += amount;
+        }
+    }
+
+    public boolean withdraw(double amount) {
+        if (amount > 0 && amount <= balance && !type.equals("Fixed Deposit")) {
+            balance -= amount;
+            return true;
+        }
+        return false;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Account No: %d\nCustomer ID: %d\nType: %s\nBalance: ₹%.2f\nInterest Rate: %.2f%%\nOpening Date: %s\nStatus: %s%s",
+                id, customerId, type, balance, interestRate, openingDate, status,
+                fdMaturity != null ? "\nFD Maturity: " + fdMaturity : "");
+    }
+}
+
+// Transaction Class
+class Transaction {
+    private final int id;
+    private final int accountId;
+    private final String type;
+    private final double amount;
+    private final double balance;
+    private final String date;
+    private final String remarks;
+
+    public Transaction(int id, int accountId, String type, double amount, 
+                      double balance, String remarks) {
+        this.id = id;
+        this.accountId = accountId;
+        this.type = type;
+        this.amount = amount;
+        this.balance = balance;
+        this.date = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+        this.remarks = remarks;
+    }
+
+    // Getters
+    public int getId() { return id; }
+    public int getAccountId() { return accountId; }
+    public String getType() { return type; }
+    public double getAmount() { return amount; }
+    public double getBalance() { return balance; }
+    public String getDate() { return date; }
+    public String getRemarks() { return remarks; }
+
+    @Override
+    public String toString() {
+        return String.format("Transaction ID: %d\nAccount: %d\nType: %s\nAmount: ₹%.2f\nBalance: ₹%.2f\nDate: %s\nRemarks: %s",
+                id, accountId, type, amount, balance, date, remarks);
+    }
+}
+
+// Loan Class
+class Loan {
+    private final int id;
+    private final int customerId;
+    private final String type;
+    private final double amount;
+    private final double interestRate;
+    private final int tenure; // in months
+    private final double monthlyPayment;
+    private final String startDate;
+    private String status;
+
+    public Loan(int id, int customerId, String type, double amount, 
+               double interestRate, int tenure) {
+        this.id = id;
+        this.customerId = customerId;
+        this.type = type;
+        this.amount = amount;
+        this.interestRate = interestRate;
+        this.tenure = tenure;
+        this.monthlyPayment = calculateEMI(amount, interestRate, tenure);
+        this.startDate = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+        this.status = "Pending Approval";
+    }
+
+    private double calculateEMI(double principal, double annualRate, int tenureMonths) {
+        double monthlyRate = (annualRate / 12) / 100;
+        return principal * monthlyRate * Math.pow(1 + monthlyRate, tenureMonths) / 
+               (Math.pow(1 + monthlyRate, tenureMonths) - 1);
+    }
+
+    // Getters
+    public int getId() { return id; }
+    public int getCustomerId() { return customerId; }
+    public String getType() { return type; }
+    public double getAmount() { return amount; }
+    public double getInterestRate() { return interestRate; }
+    public int getTenure() { return tenure; }
+    public double getMonthlyPayment() { return monthlyPayment; }
+    public String getStartDate() { return startDate; }
+    public String getStatus() { return status; }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Loan ID: %d\nCustomer ID: %d\nType: %s\nAmount: ₹%.2f\nInterest Rate: %.2f%%\nTenure: %d months\nEMI: ₹%.2f\nStart Date: %s\nStatus: %s",
+                id, customerId, type, amount, interestRate, tenure, monthlyPayment, startDate, status);
+    }
+}
+
+// Bank Management System
+public class SecureBankManagementSystem {
+    private static final Scanner scanner = new Scanner(System.in);
+    private static final List<Customer> customers = new ArrayList<>();
+    private static final List<Account> accounts = new ArrayList<>();
+    private static final List<Transaction> transactions = new ArrayList<>();
+    private static final List<Loan> loans = new ArrayList<>();
+    
+    private static int customerIdCounter = 100001;
+    private static int accountIdCounter = 500001;
+    private static int transactionIdCounter = 900001;
+    private static int loanIdCounter = 700001;
+    
+    // Interest rates
+    private static final Map<String, Double> interestRates = Map.of(
+        "Savings Account", 3.5,
+        "Current Account", 0.5,
+        "Fixed Deposit", 6.5, // Base rate, actual depends on tenure
+        "Recurring Deposit", 5.5
+    );
+    
+    // Loan interest rates
+    private static final Map<String, Double> loanInterestRates = Map.of(
+        "Personal Loan", 10.5,
+        "Home Loan", 8.5,
+        "Car Loan", 9.0,
+        "Education Loan", 7.5
+    );
+
+    public static void main(String[] args) {
+        while (true) {
+            System.out.println("\n=== SecureBank Management System ===");
+            System.out.println("1. Register Customer");
+            System.out.println("2. Open Account");
+            System.out.println("3. Process Transaction");
+            System.out.println("4. Apply for Loan");
+            System.out.println("5. View Records");
+            System.out.println("6. Exit");
+            System.out.print("Enter your choice: ");
+            
+            int choice;
+            try {
+                choice = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                continue;
+            }
+            
+            switch (choice) {
+                case 1 -> registerCustomer();
+                case 2 -> openAccount();
+                case 3 -> processTransaction();
+                case 4 -> applyForLoan();
+                case 5 -> viewRecords();
+                case 6 -> {
+                    System.out.println("Exiting SecureBank Management System. Goodbye!");
+                    return;
+                }
+                default -> System.out.println("Invalid choice. Please enter 1-6.");
+            }
+        }
+    }
+
+    private static void registerCustomer() {
+        System.out.println("\n=== Register New Customer ===");
+        
+        System.out.print("Full Name: ");
+        String name = scanner.nextLine();
+        
+        System.out.print("Age: ");
+        int age;
+        try {
+            age = Integer.parseInt(scanner.nextLine());
+            if (age < 18) {
+                System.out.println("Customer must be at least 18 years old.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid age. Please enter a number.");
+            return;
+        }
+        
+        System.out.print("Gender (Male/Female/Transgender): ");
+        String gender = scanner.nextLine();
+        if (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Transgender")) {
+            System.out.println("Invalid gender. Please enter Male, Female, or Transgender");
+            return;
+        }
+        gender = gender.substring(0, 1).toUpperCase() + gender.substring(1).toLowerCase();
+        
+        System.out.print("Phone (10 digits): ");
+        String phone = scanner.nextLine();
+        if (!phone.matches("\\d{10}")) {
+            System.out.println("Phone number must be exactly 10 digits.");
+            return;
+        }
+        
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+        if (!email.matches("^[A-Za-z0-9+_.-]+@(gmail\\.com|ac\\.in|yahoo\\.com|outlook\\.com)$")) {
+            System.out.println("Invalid email. Please provide a standard email (e.g., @gmail.com, @ac.in)");
+            return;
+        }
+        
+        System.out.print("Address: ");
+        String address = scanner.nextLine();
+        
+        System.out.print("Government ID Number: ");
+        String idProof = scanner.nextLine();
+        
+        Customer customer = new Customer(customerIdCounter++, name, age, gender, 
+                                       phone, email, address, idProof);
+        customers.add(customer);
+        
+        System.out.println("\n✅ Customer Registered Successfully!");
+        System.out.println("Customer ID: " + customer.getId());
+    }
+
+    private static void openAccount() {
+        if (customers.isEmpty()) {
+            System.out.println("No customers registered. Please register a customer first.");
+            return;
+        }
+        
+        System.out.println("\n=== Open New Account ===");
+        
+        System.out.print("Customer ID: ");
+        int customerId;
+        try {
+            customerId = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid customer ID. Please enter a number.");
+            return;
+        }
+        
+        // Check if customer exists
+        if (customers.stream().noneMatch(c -> c.getId() == customerId)) {
+            System.out.println("Customer not found. Please check the Customer ID.");
+            return;
+        }
+        
+        System.out.println("Account Types:");
+        System.out.println("1. Savings Account (3.5% interest)");
+        System.out.println("2. Current Account (0.5% interest)");
+        System.out.println("3. Fixed Deposit");
+        System.out.println("4. Recurring Deposit (5.5% interest)");
+        System.out.print("Select account type (1-4): ");
+        
+        int accountTypeChoice;
+        try {
+            accountTypeChoice = Integer.parseInt(scanner.nextLine());
+            if (accountTypeChoice < 1 || accountTypeChoice > 4) {
+                System.out.println("Invalid choice. Please select 1-4.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return;
+        }
+        
+        String accountType = switch (accountTypeChoice) {
+            case 1 -> "Savings Account";
+            case 2 -> "Current Account";
+            case 3 -> "Fixed Deposit";
+            case 4 -> "Recurring Deposit";
+            default -> "";
+        };
+        
+        // For Fixed Deposit, get tenure
+        Integer fdTenure = null;
+        if (accountType.equals("Fixed Deposit")) {
+            System.out.println("Fixed Deposit Tenure Options:");
+            System.out.println("1. 3 Months (5.5%)");
+            System.out.println("2. 6 Months (6.0%)");
+            System.out.println("3. 1 Year (6.5%)");
+            System.out.println("4. 2 Years (7.0%)");
+            System.out.println("5. 3 Years (7.5%)");
+            System.out.print("Select tenure (1-5): ");
+            
+            int tenureChoice;
+            try {
+                tenureChoice = Integer.parseInt(scanner.nextLine());
+                if (tenureChoice < 1 || tenureChoice > 5) {
+                    System.out.println("Invalid choice. Please select 1-5.");
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number.");
+                return;
+            }
+            
+            fdTenure = switch (tenureChoice) {
+                case 1 -> 3;
+                case 2 -> 6;
+                case 3 -> 12;
+                case 4 -> 24;
+                case 5 -> 36;
+                default -> 0;
+            };
+        }
+        
+        System.out.print("Initial Deposit (Minimum ₹1000): ₹");
+        double initialDeposit;
+        try {
+            initialDeposit = Double.parseDouble(scanner.nextLine());
+            if (initialDeposit < 1000) {
+                System.out.println("Minimum initial deposit is ₹1000.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a number.");
+            return;
+        }
+        
+        // Calculate interest rate (adjust for FD tenure)
+        double interestRate = interestRates.get(accountType);
+        if (accountType.equals("Fixed Deposit")) {
+            interestRate = 5.5 + (fdTenure * 0.5 / 12); // Adjust rate based on tenure
+        }
+        
+        Account account = new Account(accountIdCounter++, customerId, accountType, 
+                                    initialDeposit, interestRate, fdTenure);
+        accounts.add(account);
+        
+        // Record initial deposit as transaction
+        transactions.add(new Transaction(transactionIdCounter++, account.getId(), 
+                                       "Deposit", initialDeposit, initialDeposit, 
+                                       "Initial deposit for account opening"));
+        
+        System.out.println("\n✅ Account Opened Successfully!");
+        System.out.println("Account Number: " + account.getId());
+        System.out.println("Account Type: " + accountType);
+        if (fdTenure != null) {
+            System.out.println("Maturity Date: " + account.getFdMaturity());
+        }
+    }
+
+    private static void processTransaction() {
+        if (accounts.isEmpty()) {
+            System.out.println("No accounts exist. Please open an account first.");
+            return;
+        }
+        
+        System.out.println("\n=== Process Transaction ===");
+        
+        System.out.print("Account Number: ");
+        int accountId;
+        try {
+            accountId = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid account number. Please enter a number.");
+            return;
+        }
+        
+        Account account = accounts.stream()
+                                .filter(a -> a.getId() == accountId)
+                                .findFirst()
+                                .orElse(null);
+        
+        if (account == null) {
+            System.out.println("Account not found. Please check the account number.");
+            return;
+        }
+        
+        System.out.println("Transaction Types:");
+        System.out.println("1. Deposit");
+        System.out.println("2. Withdrawal");
+        System.out.println("3. Transfer");
+        System.out.print("Select transaction type (1-3): ");
+        
+        int transactionTypeChoice;
+        try {
+            transactionTypeChoice = Integer.parseInt(scanner.nextLine());
+            if (transactionTypeChoice < 1 || transactionTypeChoice > 3) {
+                System.out.println("Invalid choice. Please select 1-3.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return;
+        }
+        
+        String transactionType = switch (transactionTypeChoice) {
+            case 1 -> "Deposit";
+            case 2 -> "Withdrawal";
+            case 3 -> "Transfer";
+            default -> "";
+        };
+        
+        // For transfer, get target account
+        Account targetAccount = null;
+        if (transactionType.equals("Transfer")) {
+            System.out.print("Target Account Number: ");
+            int targetAccountId;
+            try {
+                targetAccountId = Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid account number. Please enter a number.");
+                return;
+            }
+            
+            targetAccount = accounts.stream()
+                                  .filter(a -> a.getId() == targetAccountId)
+                                  .findFirst()
+                                  .orElse(null);
+            
+            if (targetAccount == null) {
+                System.out.println("Target account not found. Please check the account number.");
+                return;
+            }
+            
+            if (targetAccount.getId() == account.getId()) {
+                System.out.println("Cannot transfer to the same account.");
+                return;
+            }
+        }
+        
+        System.out.print("Amount: ₹");
+        double amount;
+        try {
+            amount = Double.parseDouble(scanner.nextLine());
+            if (amount <= 0) {
+                System.out.println("Amount must be positive.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a number.");
+            return;
+        }
+        
+        System.out.print("Remarks: ");
+        String remarks = scanner.nextLine();
+        
+        // Process transaction
+        switch (transactionType) {
+            case "Deposit" -> {
+                account.deposit(amount);
+                transactions.add(new Transaction(transactionIdCounter++, account.getId(), 
+                                               "Deposit", amount, account.getBalance(), 
+                                               remarks));
+                System.out.println("\n✅ Deposit successful.");
+                System.out.printf("New Balance: ₹%.2f%n", account.getBalance());
+            }
+            case "Withdrawal" -> {
+                if (account.withdraw(amount)) {
+                    transactions.add(new Transaction(transactionIdCounter++, account.getId(), 
+                                                   "Withdrawal", amount, account.getBalance(), 
+                                                   remarks));
+                    System.out.println("\n✅ Withdrawal successful.");
+                    System.out.printf("New Balance: ₹%.2f%n", account.getBalance());
+                } else {
+                    System.out.println("\n❌ Withdrawal failed. Insufficient funds or invalid amount.");
+                }
+            }
+            case "Transfer" -> {
+                if (account.withdraw(amount)) {
+                    targetAccount.deposit(amount);
+                    
+                    // Record both transactions
+                    transactions.add(new Transaction(transactionIdCounter++, account.getId(), 
+                                                   "Transfer Out", amount, account.getBalance(), 
+                                                   "Transfer to A/C " + targetAccount.getId() + ": " + remarks));
+                    transactions.add(new Transaction(transactionIdCounter++, targetAccount.getId(), 
+                                                   "Transfer In", amount, targetAccount.getBalance(), 
+                                                   "Transfer from A/C " + account.getId() + ": " + remarks));
+                    
+                    System.out.println("\n✅ Transfer successful.");
+                    System.out.printf("Transferred ₹%.2f to A/C %d%n", amount, targetAccount.getId());
+                    System.out.printf("Your New Balance: ₹%.2f%n", account.getBalance());
+                } else {
+                    System.out.println("\n❌ Transfer failed. Insufficient funds or invalid amount.");
+                }
+            }
+        }
+    }
+
+    private static void applyForLoan() {
+        if (customers.isEmpty()) {
+            System.out.println("No customers registered. Please register a customer first.");
+            return;
+        }
+        
+        System.out.println("\n=== Apply for Loan ===");
+        
+        System.out.print("Customer ID: ");
+        int customerId;
+        try {
+            customerId = Integer.parseInt(scanner.nextLine());
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid customer ID. Please enter a number.");
+            return;
+        }
+        
+        // Check if customer exists
+        if (customers.stream().noneMatch(c -> c.getId() == customerId)) {
+            System.out.println("Customer not found. Please check the Customer ID.");
+            return;
+        }
+        
+        System.out.println("Loan Types:");
+        System.out.println("1. Personal Loan (10.5% interest)");
+        System.out.println("2. Home Loan (8.5% interest)");
+        System.out.println("3. Car Loan (9.0% interest)");
+        System.out.println("4. Education Loan (7.5% interest)");
+        System.out.print("Select loan type (1-4): ");
+        
+        int loanTypeChoice;
+        try {
+            loanTypeChoice = Integer.parseInt(scanner.nextLine());
+            if (loanTypeChoice < 1 || loanTypeChoice > 4) {
+                System.out.println("Invalid choice. Please select 1-4.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return;
+        }
+        
+        String loanType = switch (loanTypeChoice) {
+            case 1 -> "Personal Loan";
+            case 2 -> "Home Loan";
+            case 3 -> "Car Loan";
+            case 4 -> "Education Loan";
+            default -> "";
+        };
+        
+        System.out.print("Loan Amount (Minimum ₹10,000): ₹");
+        double loanAmount;
+        try {
+            loanAmount = Double.parseDouble(scanner.nextLine());
+            if (loanAmount < 10000) {
+                System.out.println("Minimum loan amount is ₹10,000.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount. Please enter a number.");
+            return;
+        }
+        
+        System.out.println("Tenure Options:");
+        System.out.println("1. 1 Year");
+        System.out.println("2. 2 Years");
+        System.out.println("3. 3 Years");
+        System.out.println("4. 5 Years");
+        System.out.println("5. 10 Years");
+        System.out.print("Select tenure (1-5): ");
+        
+        int tenureChoice;
+        try {
+            tenureChoice = Integer.parseInt(scanner.nextLine());
+            if (tenureChoice < 1 || tenureChoice > 5) {
+                System.out.println("Invalid choice. Please select 1-5.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+            return;
+        }
+        
+        int tenure = switch (tenureChoice) {
+            case 1 -> 12;
+            case 2 -> 24;
+            case 3 -> 36;
+            case 4 -> 60;
+            case 5 -> 120;
+            default -> 0;
+        };
+        
+        double interestRate = loanInterestRates.get(loanType);
+        Loan loan = new Loan(loanIdCounter++, customerId, loanType, loanAmount, 
+                           interestRate, tenure);
+        loans.add(loan);
+        
+        System.out.println("\n✅ Loan Application Submitted Successfully!");
+        System.out.println("Loan ID: " + loan.getId());
+        System.out.printf("Estimated EMI: ₹%.2f per month for %d months%n", 
+                         loan.getMonthlyPayment(), tenure);
+    }
+
+    private static void viewRecords() {
+        System.out.println("\n=== Bank Records ===");
+        
+        System.out.println("\n--- Customers ---");
+        if (customers.isEmpty()) {
+            System.out.println("No customers registered.");
+        } else {
+            customers.forEach(c -> {
+                System.out.println("ID: " + c.getId() + " | Name: " + c.getName() + 
+                                 " | Phone: " + c.getPhone() + " | Joined: " + c.getJoinDate());
+            });
+        }
+        
+        System.out.println("\n--- Accounts ---");
+        if (accounts.isEmpty()) {
+            System.out.println("No accounts opened.");
+        } else {
+            accounts.forEach(a -> {
+                Customer customer = customers.stream()
+                                          .filter(c -> c.getId() == a.getCustomerId())
+                                          .findFirst()
+                                          .orElse(null);
+                String customerName = customer != null ? customer.getName() : "Unknown";
+                
+                System.out.printf("A/C No: %d | Type: %s | Customer: %s (ID: %d) | Balance: ₹%.2f | Interest: %.2f%%%n",
+                                a.getId(), a.getType(), customerName, a.getCustomerId(), 
+                                a.getBalance(), a.getInterestRate());
+                if (a.getFdMaturity() != null) {
+                    System.out.println("  Fixed Deposit Matures on: " + a.getFdMaturity());
+                }
+            });
+        }
+        
+        System.out.println("\n--- Recent Transactions (Last 50) ---");
+        if (transactions.isEmpty()) {
+            System.out.println("No transactions processed.");
+        } else {
+            transactions.stream()
+                      .sorted((t1, t2) -> Integer.compare(t2.getId(), t1.getId())) // Descending order
+                      .limit(50)
+                      .forEach(t -> {
+                          System.out.printf("Txn ID: %d | A/C: %d | Type: %s | Amount: ₹%.2f | Balance: ₹%.2f | Date: %s%n",
+                                          t.getId(), t.getAccountId(), t.getType(), 
+                                          t.getAmount(), t.getBalance(), t.getDate());
+                          System.out.println("  Remarks: " + t.getRemarks());
+                      });
+        }
+        
+        System.out.println("\n--- Loans ---");
+        if (loans.isEmpty()) {
+            System.out.println("No loan applications.");
+        } else {
+            loans.forEach(l -> {
+                Customer customer = customers.stream()
+                                          .filter(c -> c.getId() == l.getCustomerId())
+                                          .findFirst()
+                                          .orElse(null);
+                String customerName = customer != null ? customer.getName() : "Unknown";
+                
+                System.out.printf("Loan ID: %d | Type: %s | Customer: %s (ID: %d) | Amount: ₹%.2f | Interest: %.2f%%%n",
+                                l.getId(), l.getType(), customerName, l.getCustomerId(), 
+                                l.getAmount(), l.getInterestRate());
+                System.out.printf("  Tenure: %d months | EMI: ₹%.2f | Status: %s%n",
+                                 l.getTenure(), l.getMonthlyPayment(), l.getStatus());
+            });
+        }
+    }
+}
